@@ -269,6 +269,7 @@ __global__ void OptimizedOtsu(unsigned int *histogram, float* thresh, int width,
 	{
 		hist_private[tid] = histogram[tid];
 
+		__syncwarp();
 		__syncthreads();
 
 		weight1[tid] = hist_private[tid];
@@ -276,7 +277,7 @@ __global__ void OptimizedOtsu(unsigned int *histogram, float* thresh, int width,
 		mean1[tid] = hist_private[tid] * (half_bin_length + bin_length * tid);
 		mean2[255-tid] = hist_private[tid] * (half_bin_length + bin_length * tid);
 
-		//__syncwarp();
+		__syncwarp();
 		__syncthreads();
 
 		float cs_mean1 = mean1[0];
@@ -291,78 +292,79 @@ __global__ void OptimizedOtsu(unsigned int *histogram, float* thresh, int width,
 
 		for(int stride = 1; stride <= tid; stride = stride * 2)
 		{
+			__syncwarp();
+			__syncthreads();
 			unsigned int w1 = weight1[tid - stride];
-			float m1 = mean1[tid - stride];
-			float m2 = mean2[tid - stride];
+			//float m1 = mean1[tid - stride];
+			//float m2 = mean2[tid - stride];
+			__syncwarp();
+			__syncthreads();
 			weight1[tid] += w1;
-			mean1[tid] += m1;
-			mean2[tid] += m2;
+			//mean1[tid] += m1;
+			//mean2[tid] += m2;
 		}
 
 		__syncwarp();
 		__syncthreads();
 
-		//weight2[tid] = width * height - weight1[tid] + hist_private[tid];
+		weight2[tid] = width * height - weight1[tid] + hist_private[tid];
 
-		//__syncwarp();
-		//__syncthreads();
-		//
-		////float cs_mean1 = mean1[tid];
-		////float cs_mean2 = mean2[tid];
+		__syncwarp();
+		__syncthreads();
+		
+		//float cs_mean1 = mean1[tid];
+		//float cs_mean2 = mean2[tid];
 
-		//__syncwarp();
-		//__syncthreads();
+		__syncwarp();
+		__syncthreads();
 
-		//mean1[tid] = cs_mean1 / weight1[tid];
-		//mean2[tid] = cs_mean2 / weight2[255-tid];		
+		mean1[tid] = cs_mean1 / weight1[tid];
+		mean2[tid] = cs_mean2 / weight2[255-tid];		
 
-		//if (tid == 0)
-		//{
-		//	mean1[0] = 0;
-		//}
+		if (tid == 0)
+		{
+			mean1[0] = 0;
+		}
 
-		//if (tid == 255)
-		//{
-		//	mean2[255] = 0;
-		//}
+		if (tid == 255)
+		{
+			mean2[255] = 0;
+		}
 	
-		//// Make an ordered vector 0-255
-		//key[tid] = tid;
+		// Make an ordered vector 0-255
+		key[tid] = tid;
 
-		//__syncwarp();
-		//__syncthreads();
+		__syncwarp();
+		__syncthreads();
 
-		//inter_class_variance[tid] = (weight1[tid] * weight2[tid] * (mean1[tid] - mean2[tid+1])) * (mean1[tid] - mean2[tid+1]) * 0.0000001f;
+		inter_class_variance[tid] = (weight1[tid] * weight2[tid] * (mean1[tid] - mean2[tid+1])) * (mean1[tid] - mean2[tid+1]) * 0.0000001f;
 
-		//__syncwarp();
-		//__syncthreads();
+		__syncwarp();
+		__syncthreads();
 
-		//for (int stride = 1; stride < 256; stride *= 2)
-		//{
-		//	if(tid % (2*stride) == 0)
-		//	{
-		//		if(inter_class_variance[tid] < inter_class_variance[tid+stride])
-		//		{
-		//			inter_class_variance[tid] = inter_class_variance[tid+stride];
-		//			key[tid] = key[tid+stride];
-		//		}
-		//	}
-		//	__syncthreads();
-		//}
+		for (int stride = 1; stride < 256; stride *= 2)
+		{
+			if(tid % (2*stride) == 0)
+			{
+				if(inter_class_variance[tid] < inter_class_variance[tid+stride])
+				{
+					inter_class_variance[tid] = inter_class_variance[tid+stride];
+					key[tid] = key[tid+stride];
+				}
+			}
+			__syncthreads();
+		}
 
-		//__syncwarp();
-		//__syncthreads();
+		__syncwarp();
+		__syncthreads();
 
-		////key[0] should not be 0 if working properly
+		//key[0] should not be 0 if working properly
 
 		if(tid == OUTPUT_VAL)
 		{
 			//thresh[0] = half_bin_length + bin_length * key[0]; //This is the actual Otsu's threshold
 			//thresh[0] = cs_mean1; //This is a test value
-
-			//thresh[0] = key[0];
-			//thresh[0] = hist_private[0];
-			thresh[0] = mean1[0];
+			thresh[0] = key[0];
 		}
 
 	}	
