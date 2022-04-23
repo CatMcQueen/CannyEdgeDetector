@@ -175,57 +175,65 @@ void nms_opt(float *inImg, float *nmsImg, float *gradImg, int height, int width)
 
   if (col < width && row < height) // Since size_t is unsigned, it can't fall below 0
   {
-    //for(size_t i = threadIdx.x; i < P_IMG_SIZE; i += TILE_SIZE)
-    //{
-    //  for(size_t j = threadIdx.y; j < P_IMG_SIZE; j+= TILE_SIZE)
-    //  {
-    //    //inImg[(row + i - 1)*width + (col + j - 1)];
-    //    pImage[i][j] = getPoint(inImg, col + i - 1, row + j - 1, height, width);
-    //  }
-    //}
-    //pImage[threadIdx.x][threadIdx.y] = getPoint(inImg, col - 1, row - 1, height, width);
-    pImage[threadIdx.x][threadIdx.y] = getPoint(inImg, col, row, height, width);
+    //for(size_t i = 0; i < P_IMG_SIZE; i += TILE_SIZE)
+    for(size_t i = 0; threadIdx.x + i < P_IMG_SIZE; i += TILE_SIZE)
+    {
+      for(size_t j = 0; threadIdx.y + j < P_IMG_SIZE; j+= TILE_SIZE)
+      {
+        pImage[threadIdx.x + i][threadIdx.y + j] = getPoint(inImg, col + i - 1, row + j - 1, height, width);
+      }
+    }
     pAngle[threadIdx.x][threadIdx.y] = gradImg[row*width + col];
     __syncthreads();
 
-    //float angle = pAngle[threadIdx.x][threadIdx.y];//*(gradImg + row*width + col);
+    float angle = pAngle[threadIdx.x][threadIdx.y];//*(gradImg + row*width + col);
     size_t i = threadIdx.x + 1;
     size_t j = threadIdx.y + 1;
 
-    //if ((angle > -22.5 && angle <= 22.5) || (angle > 157.5) || (angle < -157.5))
-    //{
-    //  p1 = pImage[i][j+1];
-    //  p2 = pImage[i][j-1];
-    //  //p3 = getPoint(inImg, i, j+2, 16, 16);
-    //  //p4 = getPoint(inImg, i, j-2, 16, 16);
-    //}
-    //else if ((angle > 112.5 && angle <= 157.5) || (angle < -22.5 && angle >= -67.5))
-    //{
-    //  p1 = pImage[i+1][j-1];
-    //  p2 = pImage[i-1][j+1];
-    //  //p3 = getPoint(inImg, i+2, j-2, 16, 16);
-    //  //p4 = getPoint(inImg, i-2, j+2, 16, 16);
-    //}
-    //else if ((angle > 67.5 && angle <= 112.5) || (angle < -67.5 && angle >= -112.5))
-    //{
-    //  p1 = pImage[i+1][j];
-    //  p2 = pImage[i-1][j];
-    //  //p3 = getPoint(inImg, i+2, j, 16, 16);
-    //  //p4 = getPoint(inImg, i-2, j, 16, 16);
-    //}
-    //else if ((angle > 22.5 && angle <= 67.5) || (angle < -112.5 && angle >= -157.5))
-    //{
-    //  p1 = pImage[i-1][j-1];
-    //  p2 = pImage[i+1][j+1];
-    //  //p3 = getPoint(inImg, i-2, j-2, 16, 16);
-    //  //p4 = getPoint(inImg, i+2, j+2, 16, 16);
-    //}
+    if ((angle > -22.5 && angle <= 22.5) || (angle > 157.5) || (angle < -157.5))
+    {
+      p1 = pImage[i][j+1];
+      p2 = pImage[i][j-1];
+      //p3 = getPoint(inImg, i, j+2, 16, 16);
+      //p4 = getPoint(inImg, i, j-2, 16, 16);
+    }
+    else if ((angle > 112.5 && angle <= 157.5) || (angle < -22.5 && angle >= -67.5))
+    {
+      p1 = pImage[i+1][j-1];
+      p2 = pImage[i-1][j+1];
+      //p3 = getPoint(inImg, i+2, j-2, 16, 16);
+      //p4 = getPoint(inImg, i-2, j+2, 16, 16);
+    }
+    else if ((angle > 67.5 && angle <= 112.5) || (angle < -67.5 && angle >= -112.5))
+    {
+      p1 = pImage[i+1][j];
+      p2 = pImage[i-1][j];
+      //p3 = getPoint(inImg, i+2, j, 16, 16);
+      //p4 = getPoint(inImg, i-2, j, 16, 16);
+    }
+    else if ((angle > 22.5 && angle <= 67.5) || (angle < -112.5 && angle >= -157.5))
+    {
+      p1 = pImage[i-1][j-1];
+      p2 = pImage[i+1][j+1];
+      //p3 = getPoint(inImg, i-2, j-2, 16, 16);
+      //p4 = getPoint(inImg, i+2, j+2, 16, 16);
+    }
 
-    //float center = pImage[i][j];
+    float center = pImage[i][j];
     ////*(nmsImg + i + j*width) = maxSupp(center, p1, p2, p3, p4);
     //*(nmsImg + col + row*width) = maxSupp(center, p1, p2);
-    //nmsImg[col + row*width] = pImage[i][j];
-    nmsImg[col + row*width] = pImage[threadIdx.x][threadIdx.y];
+    //for(size_t i = threadIdx.x + 1; i < TILE_SIZE + 1; i += TILE_SIZE)
+    //for(size_t i = threadIdx.x; i < TILE_SIZE; i += TILE_SIZE)
+    //{
+    //  //for(size_t j = threadIdx.y + 1; j < TILE_SIZE + 1; j+= TILE_SIZE)
+    //  for(size_t j = threadIdx.y; j < TILE_SIZE; j+= TILE_SIZE)
+    //  {
+    //    //nmsImg[col + i - 1 + (row + j - 1)*width] = pImage[i][j];
+    //    nmsImg[(col + i) + (row + j)*width] = pImage[i][j];
+    //  }
+    //}
+    //nmsImg[col + row*width] = pImage[threadIdx.x + 1][threadIdx.y + 1];
+    nmsImg[col + row*width] = maxSupp(center, p1, p2);
   }
 }
 
