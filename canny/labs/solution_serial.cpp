@@ -161,9 +161,9 @@ int main(int argc, char *argv[]) {
   //memcpy(outData, BlurImageData, imageHeight*imageWidth*sizeof(float));
   //memcpy(outData, GradMagData, imageHeight*imageWidth*sizeof(float));
   //memcpy(outData, GradPhaseData, imageHeight*imageWidth*sizeof(float));
-  //memcpy(outData, NmsImageData, imageHeight*imageWidth*sizeof(float));
+  memcpy(outData, NmsImageData, imageHeight*imageWidth*sizeof(float));
   //memcpy(outData, weakEdgeImage, imageHeight*imageWidth*sizeof(float));
-  memcpy(outData, edgeImage, imageHeight*imageWidth*sizeof(float));
+  //memcpy(outData, edgeImage, imageHeight*imageWidth*sizeof(float));
 
 #if (PRINT_DEBUG)
   //FILE *testThin = fopen("nmsThin.txt", "w");

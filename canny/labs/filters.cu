@@ -84,26 +84,26 @@ __global__ void Conv2D(float *inImg, float *outImg, double *filter, int width, i
    int halfFilter = (int)filterSize/2;
 
    // boundary check if it's in the image
-   if(row > 0 && row < height && col > 0 && col < width) {
-      float pixelvalue = 0;
-      int start_col = col - halfFilter;
-      int start_row = row - halfFilter;
-      
-      // now do the filtering
-      for (int j = 0; j < filterSize; ++j) {
-         for (int k = 0; k < filterSize; ++k) {
-	    int cur_row = start_row + j;
-            int cur_col = start_col + k;
-           
-            // only count the ones that are inside the boundaries
-            if (cur_row >=0 && cur_row < height && cur_col >= 0 && cur_col < width) {
-               pixelvalue += inImg[cur_row*width + cur_col] * filter[j + k*filterSize];
-	    }
-           
+   if(row >= 0 && row < height && col >= 0 && col < width) {
+     float pixelvalue = 0;
+     int start_col = col - halfFilter;
+     int start_row = row - halfFilter;
+
+     // now do the filtering
+     for (int j = 0; j < filterSize; ++j) {
+       for (int k = 0; k < filterSize; ++k) {
+         int cur_row = start_row + j;
+         int cur_col = start_col + k;
+
+         // only count the ones that are inside the boundaries
+         if (cur_row >=0 && cur_row < height && cur_col >= 0 && cur_col < width) {
+           pixelvalue += inImg[cur_row*width + cur_col] * filter[j + k*filterSize];
          }
-      }
-      __syncthreads();
-      outImg[row*width + col] = pixelvalue;      
+
+       }
+     }
+     __syncthreads();
+     outImg[row*width + col] = pixelvalue;      
    }
 
 }
@@ -134,7 +134,7 @@ __global__ void GradientSobel(float *inImg, float *sobelImg, float *gradientImg,
     //// DO THE SOBEL FILTERING ///////////
 
     // boundary check if it's in the image
-    if(row > 0 && row < height && col > 0 && col < width) {
+    if(row >= 0 && row < height && col >= 0 && col < width) {
         int start_col = col - halfFilter;
         int start_row = row - halfFilter;
 
