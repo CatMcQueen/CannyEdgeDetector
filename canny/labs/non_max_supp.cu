@@ -168,40 +168,58 @@ void nms_opt(float *inImg, float *nmsImg, float *gradImg, int height, int width)
   float p1 = -1.0;//, p3 = -1.0;
   float p2 = -1.0;//, p4 = -1.0;
 
+  const size_t TILE_SIZE = 16;
+  const size_t P_IMG_SIZE = TILE_SIZE + 2; // Handle overrun on edges
+  __shared__ float pImage[TILE_SIZE + 2][TILE_SIZE + 2];
+  __shared__ float pAngle[TILE_SIZE][TILE_SIZE];
+
   if (col < width && row < height) // Since size_t is unsigned, it can't fall below 0
   {
-    float angle = *(gradImg + row*width + col);
+    for(size_t i = threadIdx.x; i < P_IMG_SIZE; i += TILE_SIZE)
+    {
+      for(size_t j = threadIdx.y; j < P_IMG_SIZE; j+= TILE_SIZE)
+      {
+        //inImg[(row + i - 1)*width + (col + j - 1)];
+        pImage[i][j] = getPoint(inImg, col + i - 1, row + j - 1, height, width);
+      }
+    }
+    pAngle[threadIdx.x][threadIdx.y] = gradImg[row*width + col];
+    __syncthreads();
+
+    float angle = pAngle[threadIdx.x][threadIdx.y];//*(gradImg + row*width + col);
+    size_t i = threadIdx.x + 1;
+    size_t j = threadIdx.y + 1;
 
     if ((angle > -22.5 && angle <= 22.5) || (angle > 157.5) || (angle < -157.5))
     {
-        p1 = getPoint(inImg, col, row+1, height, width);
-        p2 = getPoint(inImg, col, row-1, height, width);
-        //p3 = getPoint(inImg, col, row+2, height, width);
-        //p4 = getPoint(inImg, col, row-2, height, width);
+      p1 = pImage[i][j+1];
+      p2 = pImage[i][j-1];
+      //p3 = getPoint(inImg, i, j+2, 16, 16);
+      //p4 = getPoint(inImg, i, j-2, 16, 16);
     }
     else if ((angle > 112.5 && angle <= 157.5) || (angle < -22.5 && angle >= -67.5))
     {
-        p1 = getPoint(inImg, col+1, row-1, height, width);
-        p2 = getPoint(inImg, col-1, row+1, height, width);
-        //p3 = getPoint(inImg, col+2, row-2, height, width);
-        //p4 = getPoint(inImg, col-2, row+2, height, width);
+      p1 = pImage[i+1][j-1];
+      p2 = pImage[i-1][j+1];
+      //p3 = getPoint(inImg, i+2, j-2, 16, 16);
+      //p4 = getPoint(inImg, i-2, j+2, 16, 16);
     }
     else if ((angle > 67.5 && angle <= 112.5) || (angle < -67.5 && angle >= -112.5))
     {
-        p1 = getPoint(inImg, col+1, row, height, width);
-        p2 = getPoint(inImg, col-1, row, height, width);
-        //p3 = getPoint(inImg, col+2, row, height, width);
-        //p4 = getPoint(inImg, col-2, row, height, width);
+      p1 = pImage[i+1][j];
+      p2 = pImage[i-1][j];
+      //p3 = getPoint(inImg, i+2, j, 16, 16);
+      //p4 = getPoint(inImg, i-2, j, 16, 16);
     }
     else if ((angle > 22.5 && angle <= 67.5) || (angle < -112.5 && angle >= -157.5))
     {
-        p1 = getPoint(inImg, col-1, row-1, height, width);
-        p2 = getPoint(inImg, col+1, row+1, height, width);
-        //p3 = getPoint(inImg, col-2, row-2, height, width);
-        //p4 = getPoint(inImg, col+2, row+2, height, width);
+      p1 = pImage[i-1][j-1];
+      p2 = pImage[i+1][j+1];
+      //p3 = getPoint(inImg, i-2, j-2, 16, 16);
+      //p4 = getPoint(inImg, i+2, j+2, 16, 16);
     }
 
-    float center = getPoint(inImg, col, row, height, width);
+    float center = pImage[i][j];
     //*(nmsImg + i + j*width) = maxSupp(center, p1, p2, p3, p4);
     *(nmsImg + col + row*width) = maxSupp(center, p1, p2);
   }
