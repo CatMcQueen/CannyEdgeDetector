@@ -64,11 +64,15 @@ do
    imgOutFile=outputImg$((count)).ppm
    echo "cmd: ${cuda_memcheck} ./CannyImage_Solution -f ${filter_size} -o ${hw_path}/CannyImage_output/gpu_$imgOutFile -i $i/input.ppm -t image &> ${hw_path}/CannyImage_output/gpu_$file"
    ${cuda_memcheck} ./CannyImage_Solution -f ${filter_size} -o ${hw_path}/CannyImage_output/gpu_$imgOutFile -i $i/input.ppm -t image &> ${hw_path}/CannyImage_output/gpu_$file 
+   
+   echo "cmd: ${cuda_memcheck} ./CannyImage_Solution_Opt -f ${filter_size} -o ${hw_path}/CannyImage_output/gpu_$imgOutFile -i $i/input.ppm -t image &> ${hw_path}/CannyImage_output/opt_$file"
+   ${cuda_memcheck} ./CannyImage_Solution_Opt -f ${filter_size} -o ${hw_path}/CannyImage_output/gpu_$imgOutFile -i $i/input.ppm -t image &> ${hw_path}/CannyImage_output/opt_$file 
+
    echo "cmd: ${memcheck} ./CannyImage_Serial -f ${filter_size} -o ${hw_path}/CannyImage_output/serial_$imgOutFile -i $i/input.ppm -t image &> ${hw_path}/CannyImage_output/serial_$file"
    ${memcheck} ./CannyImage_Serial -f ${filter_size} -o ${hw_path}/CannyImage_output/serial_$imgOutFile -i $i/input.ppm -t image &> ${hw_path}/CannyImage_output/serial_$file
-   echo
 
-   python timingReport.py ${hw_path}/CannyImage_output/serial_$file ${hw_path}/CannyImage_output/gpu_$file &> ${hw_path}/CannyImage_output/timing-report-img$((count)).txt
+   echo
+   python timingReport.py ${hw_path}/CannyImage_output/serial_$file ${hw_path}/CannyImage_output/gpu_$file ${hw_path}/CannyImage_output/opt_$file &> ${hw_path}/CannyImage_output/timing-report-img$((count)).txt
    count=$((count+1))
 done
 

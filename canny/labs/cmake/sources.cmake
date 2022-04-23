@@ -96,6 +96,8 @@ target_link_libraries( ${target_canny_serial} ${canny_serial_libs} )
 ################################################################################
 # Build CUDA executables
 ################################################################################
+
+# Naive executable
 set(target_canny_gpu CannyImage_Solution )
 
 set( canny_gpu_libs
@@ -113,3 +115,12 @@ set(sources_gpu
 cuda_add_executable(${target_canny_gpu} ${sources_gpu})
 target_link_libraries( ${target_canny_gpu} ${canny_gpu_libs} ) 
 
+# Optimized executable
+set(target_canny_opt_gpu CannyImage_Solution_Opt )
+
+set(sources_opt_gpu
+  ${PROJECT_SOURCE_DIR}/solution_opt.cu
+  )
+
+cuda_add_executable(${target_canny_opt_gpu} ${sources_opt_gpu})
+target_link_libraries( ${target_canny_opt_gpu} ${canny_gpu_libs} ) 

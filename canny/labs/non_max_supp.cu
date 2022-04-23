@@ -33,8 +33,8 @@ void nms(float *inImg, float *nmsImg, float *gradImg, int height, int width)
     for(int i = 0; i < width; ++i)
     {
       float angle = *(gradImg + j*width + i);
-      float p1 = -1.0, p2 = -1.0;
-      float p3 = -1.0, p4 = -1.0;
+      float p1 = -1.0;//, p3 = -1.0;
+      float p2 = -1.0;//, p4 = -1.0;
       unsigned int fAngle = 0;
       if (angle > 180)
       {
@@ -65,26 +65,26 @@ void nms(float *inImg, float *nmsImg, float *gradImg, int height, int width)
         case 0:
           p1 = getPoint(inImg, i, j+1, height, width);
           p2 = getPoint(inImg, i, j-1, height, width);
-          p3 = getPoint(inImg, i, j+2, height, width);
-          p4 = getPoint(inImg, i, j-2, height, width);
+          //p3 = getPoint(inImg, i, j+2, height, width);
+          //p4 = getPoint(inImg, i, j-2, height, width);
           break;
         case 45:
           p1 = getPoint(inImg, i-1, j-1, height, width);
           p2 = getPoint(inImg, i+1, j+1, height, width);
-          p3 = getPoint(inImg, i-2, j-2, height, width);
-          p4 = getPoint(inImg, i+2, j+2, height, width);
+          //p3 = getPoint(inImg, i-2, j-2, height, width);
+          //p4 = getPoint(inImg, i+2, j+2, height, width);
           break;
         case 90:
           p1 = getPoint(inImg, i+1, j, height, width);
           p2 = getPoint(inImg, i-1, j, height, width);
-          p3 = getPoint(inImg, i+2, j, height, width);
-          p4 = getPoint(inImg, i-2, j, height, width);
+          //p3 = getPoint(inImg, i+2, j, height, width);
+          //p4 = getPoint(inImg, i-2, j, height, width);
           break;
         case 135:
           p1 = getPoint(inImg, i+1, j-1, height, width);
           p2 = getPoint(inImg, i-1, j+1, height, width);
-          p3 = getPoint(inImg, i+2, j-2, height, width);
-          p4 = getPoint(inImg, i-2, j+2, height, width);
+          //p3 = getPoint(inImg, i+2, j-2, height, width);
+          //p4 = getPoint(inImg, i-2, j+2, height, width);
           break;
         default:
           break;
@@ -105,8 +105,8 @@ void nms_global(float *inImg, float *nmsImg, float *gradImg, int height, int wid
   size_t col = blockDim.x * blockIdx.x + threadIdx.x;
   size_t row  = blockDim.y * blockIdx.y + threadIdx.y;
 
-  float p1 = -1.0, p2 = -1.0;
-  float p3 = -1.0, p4 = -1.0;
+  float p1 = -1.0;//, p3 = -1.0;
+  float p2 = -1.0;//, p4 = -1.0;
   unsigned int fAngle = 0;
 
   //if (col >= 0 && col < width && row >= 0 && row < height)
@@ -128,29 +128,77 @@ void nms_global(float *inImg, float *nmsImg, float *gradImg, int height, int wid
       case 0:
         p1 = getPoint(inImg, col, row+1, height, width);
         p2 = getPoint(inImg, col, row-1, height, width);
-        p3 = getPoint(inImg, col, row+2, height, width);
-        p4 = getPoint(inImg, col, row-2, height, width);
+        //p3 = getPoint(inImg, col, row+2, height, width);
+        //p4 = getPoint(inImg, col, row-2, height, width);
         break;
       case 45:
         p1 = getPoint(inImg, col-1, row-1, height, width);
         p2 = getPoint(inImg, col+1, row+1, height, width);
-        p3 = getPoint(inImg, col-2, row-2, height, width);
-        p4 = getPoint(inImg, col+2, row+2, height, width);
+        //p3 = getPoint(inImg, col-2, row-2, height, width);
+        //p4 = getPoint(inImg, col+2, row+2, height, width);
         break;
       case 90:
         p1 = getPoint(inImg, col+1, row, height, width);
         p2 = getPoint(inImg, col-1, row, height, width);
-        p3 = getPoint(inImg, col+2, row, height, width);
-        p4 = getPoint(inImg, col-2, row, height, width);
+        //p3 = getPoint(inImg, col+2, row, height, width);
+        //p4 = getPoint(inImg, col-2, row, height, width);
         break;
       case 135:
         p1 = getPoint(inImg, col+1, row-1, height, width);
         p2 = getPoint(inImg, col-1, row+1, height, width);
-        p3 = getPoint(inImg, col+2, row-2, height, width);
-        p4 = getPoint(inImg, col-2, row+2, height, width);
+        //p3 = getPoint(inImg, col+2, row-2, height, width);
+        //p4 = getPoint(inImg, col-2, row+2, height, width);
         break;
       default:
         break;
+    }
+
+    float center = getPoint(inImg, col, row, height, width);
+    //*(nmsImg + i + j*width) = maxSupp(center, p1, p2, p3, p4);
+    *(nmsImg + col + row*width) = maxSupp(center, p1, p2);
+  }
+}
+
+__global__
+void nms_opt(float *inImg, float *nmsImg, float *gradImg, int height, int width)
+{
+  size_t col = blockDim.x * blockIdx.x + threadIdx.x;
+  size_t row  = blockDim.y * blockIdx.y + threadIdx.y;
+
+  float p1 = -1.0;//, p3 = -1.0;
+  float p2 = -1.0;//, p4 = -1.0;
+
+  if (col < width && row < height) // Since size_t is unsigned, it can't fall below 0
+  {
+    float angle = *(gradImg + row*width + col);
+
+    if ((angle > -22.5 && angle <= 22.5) || (angle > 157.5) || (angle < -157.5))
+    {
+        p1 = getPoint(inImg, col, row+1, height, width);
+        p2 = getPoint(inImg, col, row-1, height, width);
+        //p3 = getPoint(inImg, col, row+2, height, width);
+        //p4 = getPoint(inImg, col, row-2, height, width);
+    }
+    else if ((angle > 112.5 && angle <= 157.5) || (angle < -22.5 && angle >= -67.5))
+    {
+        p1 = getPoint(inImg, col+1, row-1, height, width);
+        p2 = getPoint(inImg, col-1, row+1, height, width);
+        //p3 = getPoint(inImg, col+2, row-2, height, width);
+        //p4 = getPoint(inImg, col-2, row+2, height, width);
+    }
+    else if ((angle > 67.5 && angle <= 112.5) || (angle < -67.5 && angle >= -112.5))
+    {
+        p1 = getPoint(inImg, col+1, row, height, width);
+        p2 = getPoint(inImg, col-1, row, height, width);
+        //p3 = getPoint(inImg, col+2, row, height, width);
+        //p4 = getPoint(inImg, col-2, row, height, width);
+    }
+    else if ((angle > 22.5 && angle <= 67.5) || (angle < -112.5 && angle >= -157.5))
+    {
+        p1 = getPoint(inImg, col-1, row-1, height, width);
+        p2 = getPoint(inImg, col+1, row+1, height, width);
+        //p3 = getPoint(inImg, col-2, row-2, height, width);
+        //p4 = getPoint(inImg, col+2, row+2, height, width);
     }
 
     float center = getPoint(inImg, col, row, height, width);

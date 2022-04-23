@@ -60,18 +60,9 @@ int main(int argc, char *argv[])
   float *deviceWeakEdgeData;
   float *deviceThresh;
 
-  // Filtering parameters
-  float *BlurImageData;
-  float *GradMagData;
-  float *GradPhaseData;
-  float *NmsImageData;
-  float *EdgeData;
-  float *WeakEdgeData;
-
   // Otsu's Method parameters
   unsigned int *hostHistogram;
   unsigned int *deviceHistogram;
-  unsigned int *histogram;
 
 
   ////////////////////
@@ -133,7 +124,6 @@ int main(int argc, char *argv[])
 
   // Allocate memory on host and initialize to 0
   hostHistogram = (unsigned int *)malloc(256*sizeof(unsigned int));
-  histogram = (unsigned int *)calloc(256, sizeof(unsigned int));
 
   // Allocate memory on host for threshold
   hostThresh = (float *)malloc(sizeof(float));
@@ -271,6 +261,7 @@ int main(int argc, char *argv[])
   wbTime_start(Copy, "Copying data from the GPU");
 
   // Copy data from device back to host
+  cudaMemcpy(hostGrayImageData, deviceGrayImageData, imageWidth*imageHeight*sizeof(float), cudaMemcpyDeviceToHost);
   cudaMemcpy(hostBlurImageData, deviceBlurImageData, imageWidth*imageHeight*sizeof(float), cudaMemcpyDeviceToHost);
   cudaMemcpy(hostGradMagData, deviceGradMagData, imageHeight*imageWidth*sizeof(float), cudaMemcpyDeviceToHost);
   cudaMemcpy(hostGradPhaseData, deviceGradPhaseData, imageHeight*imageWidth*sizeof(float), cudaMemcpyDeviceToHost);
@@ -325,18 +316,18 @@ int main(int argc, char *argv[])
   printf("Width = %u\n",imageWidth);
   printf("Height = %u\n",imageHeight);
   printf("InputImage[0] = %f\n",hostInputImageData[0]);
-  printf("Histogram[0] = %u\n",histogram[0]);
-  printf("Histogram[1] = %u\n",histogram[1]);
-  printf("Histogram[20] = %u\n",histogram[20]);
-  printf("Histogram[45] = %u\n",histogram[45]);
-  printf("Histogram[56] = %u\n",histogram[56]);
-  printf("Histogram[255] = %u\n",histogram[255]);
-  //printf("Host Histogram[0] = %u\n",hostHistogram[0]);
-	//printf("Host Histogram[1] = %u\n",hostHistogram[1]);
-	//printf("Host Histogram[20] = %u\n",hostHistogram[20]);
-	//printf("Host Histogram[49] = %u\n",hostHistogram[49]);
-	//printf("Host Histogram[56] = %u\n",hostHistogram[56]);
-	//printf("Host Histogram[255] = %u\n",hostHistogram[255]);
+  //printf("Histogram[0] = %u\n",histogram[0]);
+  //printf("Histogram[1] = %u\n",histogram[1]);
+  //printf("Histogram[20] = %u\n",histogram[20]);
+  //printf("Histogram[45] = %u\n",histogram[45]);
+  //printf("Histogram[56] = %u\n",histogram[56]);
+  //printf("Histogram[255] = %u\n",histogram[255]);
+  printf("Host Histogram[0] = %u\n",hostHistogram[0]);
+	printf("Host Histogram[1] = %u\n",hostHistogram[1]);
+	printf("Host Histogram[20] = %u\n",hostHistogram[20]);
+	printf("Host Histogram[49] = %u\n",hostHistogram[49]);
+	printf("Host Histogram[56] = %u\n",hostHistogram[56]);
+	printf("Host Histogram[255] = %u\n",hostHistogram[255]);
   printf("Image[0] = %f\n",hostGrayImageData[0]);
   printf("Image[1] = %f\n",hostGrayImageData[1]);
   printf("Image[36] = %f\n",hostGrayImageData[36]);
