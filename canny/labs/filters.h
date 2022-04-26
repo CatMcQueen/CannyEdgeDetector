@@ -3,7 +3,8 @@
 //#define FILTERSIZE 3
 
 void Conv2DSerial(float *inImg, float *outImg, double *filter, int width, int height, size_t filterSize);
-void populate_blur_filter(double *outFilter, size_t filterEdgeLen);
+float get_std(float *inImg, int width, int height); 
+void populate_blur_filter(double *outFilter, size_t filterEdgeLen, float stdev);
 void GradientSobelSerial(float *inImg, float *sobelImg, float *gradientImg, int height, int width, size_t filterSIze); 
 void ColorToGrayscaleSerial(float *input, float *output, unsigned int y, unsigned int x); 
 

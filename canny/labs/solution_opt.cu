@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
   int imageChannels;
   int imageWidth;
   int imageHeight;
+  float stdev;
   size_t filterSize = 3;
   char *inputImageFile;
   wbImage_t inputImage;
@@ -76,8 +77,8 @@ int main(int argc, char *argv[])
 
   // Read input file
   inputImageFile = wbArg_getInputFile(args, 0);
-  filterSize = wbArg_getInputFilterSize(args);
-
+  stdev = wbArg_getInputFilterSize(args);
+  filterSize = 2*ceil(stdev/40.0) + 1;
   // Import input image 
   inputImage = wbImport(inputImageFile);
 
@@ -139,12 +140,13 @@ int main(int argc, char *argv[])
   // Create filter skeleton
   //double filter[FILTERSIZE][FILTERSIZE];
   double *filter = (double *)calloc(filterSize*filterSize, sizeof(double));
+  double *sharedfilter = (double *)calloc(filterSize*filterSize, sizeof(double));
   double *deviceFilter;
   wbCheck(cudaMalloc((void **)&deviceFilter, filterSize*filterSize*sizeof(double)));
 
   // Fill the gaussian filter
-  populate_blur_filter(filter, filterSize);
-
+  populate_blur_filter(filter, filterSize, stdev);
+  cudaMemcpyToSymbol(sharedfilter, &filter, filterSize * sizeof(float));
   // ?????
   //int filterSize = (int)FILTERSIZE;
 

@@ -141,7 +141,8 @@ int main(int argc, char *argv[])
   wbCheck(cudaMalloc((void **)&deviceFilter, filterSize*filterSize*sizeof(double)));
 
   // Fill the gaussian filter
-  populate_blur_filter(filter, filterSize);
+  float stdev = .6;
+  populate_blur_filter(filter, filterSize, stdev);
 
   // ?????
   //int filterSize = (int)FILTERSIZE;

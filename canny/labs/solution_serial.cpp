@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
     int imageChannels;
     int imageWidth;
     int imageHeight;
+    float stdev;
     size_t filterSize = 3; // default value
     char *inputImageFile;
     wbImage_t inputImage;
@@ -52,7 +53,7 @@ int main(int argc, char *argv[])
 
     // Read input file
     inputImageFile = wbArg_getInputFile(args, 0);
-    filterSize = wbArg_getInputFilterSize(args);
+    stdev  = wbArg_getInputFilterSize(args);
 
     // Import input image
     inputImage = wbImport(inputImageFile);
@@ -61,13 +62,12 @@ int main(int argc, char *argv[])
     imageWidth = wbImage_getWidth(inputImage);
     imageHeight = wbImage_getHeight(inputImage);
     imageChannels = wbImage_getChannels(inputImage);
-
+    
     // Define new output image
     outputImage = wbImage_new(imageWidth, imageHeight, imageChannels);
 
     // Define output image data
     hostInputImageData = wbImage_getData(inputImage);
-
 
     ////////////////////////////////
     // Host Memory Initialization //
@@ -79,10 +79,6 @@ int main(int argc, char *argv[])
 
     // Start memory allocation timer
     wbTime_start(GPU, "Doing memory allocation");
-
-    // Fill the gaussian filter
-    double *filter = (double *)calloc(filterSize * filterSize, sizeof(double));
-    populate_blur_filter(filter, filterSize);
 
     // Allocate memory on host
     GrayImageData = (float *)calloc(imageHeight * imageWidth, sizeof(float));
@@ -116,6 +112,16 @@ int main(int argc, char *argv[])
     wbTime_start(Compute, "ColorToGrayscale computation");
         ColorToGrayscaleSerial(hostInputImageData, GrayImageData, imageWidth, imageHeight);
     wbTime_stop(Compute, "ColorToGrayscale computation");
+
+    // solve for stdev of center row
+    stdev = get_std(GrayImageData, imageWidth, imageHeight);
+    filterSize = 2*ceil(stdev*3)+1;
+    printf("\n");
+    printf("Stdev = %f\n", stdev);
+    // Fill the gaussian filter
+    double *filter = (double *)calloc(filterSize * filterSize, sizeof(double));
+    populate_blur_filter(filter, filterSize, stdev);
+    
 
     // Blur image using Gaussian Kernel
     wbTime_start(Compute, "Conv2D computation");

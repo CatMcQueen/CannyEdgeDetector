@@ -3,8 +3,8 @@
 // and the sobel filter which gives the 
 //  gradient descent = GradientSobel
 #include "filters.h"
+__constant__ float sharedfilter[100]; 
 
-#define FILTERSIZE 3
 #define BLOCKSIZE 16
 
 __global__ void Conv2DOpt(float *inImg, float *outImg, double *filter, int width, int height, size_t filterSize) {
@@ -47,13 +47,11 @@ __global__ void Conv2DOptRow(float *inImg, float *outImg, double *filter, int wi
      int start_col = col - halfFilter;
 
      // now do the filtering
+     #pragma unroll
      for (int j = 0; j < filterSize; ++j) {
-         int cur_row = row;
-         int cur_col = start_col + j;
-
          // only count the ones that are inside the boundaries
-         if (cur_row >=0 && cur_row < height && cur_col >= 0 && cur_col < width) {
-           pixelvalue += inImg[cur_row*width + cur_col] * filter[j*filterSize+1]*3; //[k][j];
+         if (row >=0 && row < height && (start_col+j) >= 0 && (start_col+j) < width) {
+           pixelvalue += inImg[row*width + (col+j)] * filter[j*filterSize+1]*3; //[k][j];
          }
 
      }
@@ -73,13 +71,11 @@ __global__ void Conv2DOptCol(float *inImg, float *outImg, double *filter, int wi
      int start_row = row - halfFilter;
 
      // now do the filtering
+     #pragma unroll
      for (int j = 0; j < filterSize; ++j) {
-         int cur_row = start_row+j;
-         int cur_col = col;
-
          // only count the ones that are inside the boundaries
-         if (cur_row >=0 && cur_row < height && cur_col >= 0 && cur_col < width) {
-           pixelvalue += inImg[cur_row*width + cur_col] * filter[filterSize + j]; //[k][j];
+         if ((start_row+j) >=0 && (start_row+j) < height && col >= 0 && col < width) {
+           pixelvalue += inImg[(start_row+j)*width + col] * filter[filterSize + j]; //[k][j];
          }
 
      }
@@ -153,14 +149,8 @@ __global__ void GradientSobelOpt(float *inImg, float *sobelImg, float *gradientI
 __global__ void Conv2DTiled(float *inImg, float *outImg, double *filter, int width, int height, size_t filterSize) {
     int halfFilter = 1;//(int)filterSize/2;
     // first make a shared memory filter
-    float sharedfilter[FILTERSIZE][FILTERSIZE];    
-    for(int i = 0; i < filterSize; i++) {
-        for(int j=0; j < filterSize; j++) {
-            sharedfilter[i][j] = filter[i * filterSize + j];
-        }
-    }
-   
-    int TILESIZE = BLOCKSIZE - FILTERSIZE + 1;
+ 
+    int TILESIZE = BLOCKSIZE - filterSize + 1;
     int tx = threadIdx.x; int bx = blockIdx.x;
     int ty = threadIdx.y; int by = blockIdx.y;
     //int bdx = blockDim.x; int bdy = blockDim.y;
@@ -194,7 +184,7 @@ __global__ void Conv2DTiled(float *inImg, float *outImg, double *filter, int wid
                 int currentrow = i + cornerrow;
 		int currentcol = j + cornercol;
 		if (currentrow >= 0 && currentcol >= 0 && currentrow < height && currentcol < width) {
-  		    pval += tile[currentrow][currentcol] * sharedfilter[j][i];   
+  		    pval += tile[currentrow][currentcol] * sharedfilter[j*width+i];   
                     //num_pixel++;
 		}
              }
@@ -214,7 +204,7 @@ __global__ void GradientSobelTiled(float *inImg, float *sobelImg, float *gradien
     //int row = blockIdx.y * blockDim.y + threadIdx.y;
     //int col = blockIdx.x * blockDim.x + threadIdx.x;
 
-    int TILESIZE = BLOCKSIZE - FILTERSIZE + 1;
+    int TILESIZE = BLOCKSIZE - filterSize + 1;
     // To detect horizontal lines, G_x.
     const int fmat_x[3][3] = {
       {-1, 0, 1},
@@ -284,12 +274,28 @@ __global__ void GradientSobelTiled(float *inImg, float *sobelImg, float *gradien
 //  gradient descent = GradientSobel
 #include "filters.h"
 
-void populate_blur_filter(double *outFilter, size_t filterEdgeLen)
+float get_std(float *inImg, int width, int height){
+    // sum the center row for std approximation
+    float summation = 0;
+    int row = floor(height/2);
+    for(int i = 0; i < width; i++) {
+       summation += inImg[row*width+i];
+    }
+    float mean = summation / width;
+    float variance = 0;
+    for(int i = 0; i < width; i++) {
+       variance += pow(inImg[row*width+i] - mean, 2); 
+    }
+    float stdev = sqrt(variance/width);
+    return stdev;
+}
+
+
+void populate_blur_filter(double *outFilter, size_t filterEdgeLen, float stDevSq)
 {
     //double scaleVal = 1;
     //double stDev = (double)FILTERSIZE/3;
 
-    double stDevSq = 0.6;
     double pi = M_PI;
 	 double scaleFac = (1 / (2*pi*stDevSq));
 
