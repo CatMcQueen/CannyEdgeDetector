@@ -1,8 +1,8 @@
 
 %% Read image
 
-Image = imread("Dataset/0/input.ppm");
-imageIn = imread("CannyImage_output_EDGE/serial_0.83_outputImg0.ppm");
+Image = imread("CannyImage/Dataset/0/input.ppm");
+imageIn = imread("CannyImage_output/serial_0.83_outputImg0.ppm");
 
 imageGray = 0.21*Image(:,:,1) + 0.71*Image(:,:,2) + 0.07*Image(:,:,3);
 

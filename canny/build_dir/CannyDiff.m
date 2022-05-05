@@ -1,10 +1,10 @@
 %% Read images
 
 % Final edges
-serial = imread("CannyImage_output_EDGE/serial_0.83_outputImg0.ppm");
-gpu = imread("CannyImage_output_EDGE/gpu_0.83_outputImg0.ppm");
-opt = imread("CannyImage_output_EDGE/opt_0.83_outputImg0.ppm");
-best = imread("CannyImage_output_EDGE/best_0.83_outputImg0.ppm");
+serial = imread("CannyImage_output/serial_0.83_outputImg0.ppm");
+gpu = imread("CannyImage_output/gpu_0.83_outputImg0.ppm");
+opt = imread("CannyImage_output/opt_0.83_outputImg0.ppm");
+best = imread("CannyImage_output/best_0.83_outputImg0.ppm");
 
 % NMS
 % serial = imread("CannyImage_output_NMS/serial_0.83_outputImg0.ppm");
