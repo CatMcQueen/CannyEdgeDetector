@@ -7,11 +7,10 @@ opt = imread("CannyImage_output/opt_0.83_outputImg0.ppm");
 best = imread("CannyImage_output/best_0.83_outputImg0.ppm");
 
 % NMS
-% serial = imread("CannyImage_output_NMS/serial_0.83_outputImg0.ppm");
-% gpu = imread("CannyImage_output_NMS/gpu_0.83_outputImg0.ppm");
-% opt = imread("CannyImage_output_NMS/opt_0.83_outputImg0.ppm");
-% best = imread("CannyImage_output_NMS/best_0.83_outputImg0.ppm");
-
+% serial = imread("CannyImage_output/serial_0.83_outputImg0_NMS.ppm");
+% gpu = imread("CannyImage_output/gpu_0.83_outputImg0_NMS.ppm");
+% opt = imread("CannyImage_output/opt_0.83_outputImg0_NMS.ppm");
+% best = imread("CannyImage_output/best_0.83_outputImg0_NMS.ppm");
 %% Compute image histograms
 
 [serialHist, ~] = imhist(serial);
