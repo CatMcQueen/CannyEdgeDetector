@@ -2,7 +2,7 @@ Note: For ease of reading, markdown formatted instructions can be found at
 https://github.com/CatMcQueen/CannyEdgeDetector
 
 # CannyEdgeDetector
-Canny Edge Detector for CUDA implementation using C++, with Otzu's method for 
+Canny Edge Detector for CUDA implementation using C++, with Otsu's method for 
 threshold values
 
 # Build Instructions
@@ -74,6 +74,21 @@ canny/build_dir/CannyImage_output/timing-report-0.83-<img_num>.txt
 ```
 
 The functional verification should be run on MatLab. Using ```CannyDiff.m``` and
+```CannyVerify.m``` from the ```build_dir``` folder, change the filepaths in
+each to fit the absolute file path associated with the output images.
+
+These file paths will be for serial, gpu, opt, and best. These file paths should
+look like
+```
+$path/canny/build_dir/CannyImage_output/serial_0.83_outputImg<img_num>.ppm
+$path/canny/build_dir/CannyImage_output/gpu_0.83_outputImg<img_num>.ppm
+$path/canny/build_dir/CannyImage_output/opt_0.83_outputImg<img_num>.ppm
+$path/canny/build_dir/CannyImage_output/best_0.83_outputImg<img_num>.ppm
+```
+Then running in matlab will give the verification plots.
+
+
+The functional verification should be run on MatLab. Using ```CannyDiff.m``` and 
 ```CannyVerify.m``` from the ```build_dir``` folder, change the filepaths in
 each to fit the absolute file path associated with the output images.
 

@@ -2,7 +2,7 @@ Note: For ease of reading, markdown formatted instructions can be found at
 https://github.com/CatMcQueen/CannyEdgeDetector
 
 # CannyEdgeDetector
-Canny Edge Detector for CUDA implementation using C++, with Otzu's method for 
+Canny Edge Detector for CUDA implementation using C++, with Otsu's method for 
 threshold values
 
 # Build Instructions
